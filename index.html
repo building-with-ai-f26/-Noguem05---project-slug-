@@ -170,23 +170,24 @@
       <h2>Living PRD (Product Requirements Document)</h2>
       <p class="meta">Updated every week as we test with real users and learn what works.</p>
 
-      <h3>1. Target User & The Job to Be Done</h3>
-      <p><strong>Who is this for?</strong> [Name a specific, reachable person or role you have direct access to.]</p>
-      <p><strong>The painful "Before" workflow:</strong> [How do they do this today, and why is it slow, manual, or broken?]</p>
-      <p><strong>The "After" workflow with this product:</strong> [What does your tool do for them in one sitting?]</p>
+    <h3>1. Target User & The Job to Be Done</h3>
+      <p><strong>Who is this for?</strong> A regular gym-goer who wants a fast, frictionless, and completely free way to log weight training sessions without paying for subscription apps.</p>
+      <p><strong>The painful "Before" workflow:</strong> Searching manually through long, confusing exercise lists in subscription-gated apps, losing track of progressive overload weights, or relying on chaotic phone notes apps between sets.</p>
+      <p><strong>The "After" workflow with this product:</strong> Taking a quick photo of the gym machine to automatically identify the equipment and target muscle group, then tapping once to log the set and move on.</p>
 
       <h3>2. Scope & Explicit Non-Goals</h3>
       <ul>
-        <li><strong>In Scope (Core Workflow):</strong> [The 1 main workflow this product does reliably]</li>
-        <li><strong>Out of Scope #1:</strong> [Feature you are deliberately NOT building in 6 weeks]</li>
-        <li><strong>Out of Scope #2:</strong> [Feature you are deliberately NOT building in 6 weeks]</li>
-        <li><strong>Out of Scope #3:</strong> [Feature you are deliberately NOT building in 6 weeks]</li>
+        <li><strong>In Scope (Core Workflow):</strong> User uploads a photo of a gym machine, the AI identifies the equipment and target muscle group, and the user logs their sets and reps.</li>
+        <li><strong>Out of Scope #1:</strong> Video motion analysis or real-time rep counting.</li>
+        <li><strong>Out of Scope #2:</strong> Social media feeds, leaderboards, or profile sharing.</li>
+        <li><strong>Out of Scope #3:</strong> Background syncing with smartwatches or wearables for Build 1.</li>
       </ul>
 
       <h3>3. How It Works Under the Hood & Riskiest Assumption (Week 2+)</h3>
-      <p><strong>Riskiest Assumption:</strong> [What is the #1 technical or user risk that could sink this product?]</p>
-      <p><strong>Simple Architecture:</strong> [User Input] → [Your App / Server] → [AI Model / Tool] → [Output]</p>
-
+      <p><strong>Riskiest Assumption:</strong> Ensuring the AI vision model can reliably and accurately distinguish between similar-looking gym cable and pin-load machines from a standard gym-floor photo.</p>
+      <p><strong>Simple Architecture:</strong> [User Uploads Machine Photo] → [Local Web App / Agent] → [AI Vision Model] → [Identified Machine & Log Form Output]</p>
+(You can leave Section 4 ("Unit Economics & Analytics Snapshot") completely as-is for now, since
+      
       <h3>4. Unit Economics & Analytics Snapshot (Updated Weekly)</h3>
       <div class="grid-2">
         <div class="stat-box">
