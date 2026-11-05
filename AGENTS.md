@@ -3,15 +3,15 @@
 > Give this file to your coding agent and check that it is using these instructions. Keep the stack, commands, and ground rules current.
 
 ## 1. Project Overview
-- **What this repo builds:** [1–2 sentence summary]
+- **What this repo builds:** SnapSet — snap a photo of a gym machine, see what you logged last time on it, and log today's sets/reps/weight.
 - **Primary user & core workflow:** [See the living PRD in `docs/index.html`]
-- **Tech stack:** [e.g., Python 3.12 / FastAPI / Next.js / SQLite / OpenRouter API]
+- **Tech stack:** Node.js 22 (built-in modules only, no npm packages) / plain HTML+JS page in `public/` / logs saved to `data/logs.json` (gitignored). Machine "identification" is currently faked with a dropdown; real AI vision comes later.
 
 ## 2. Commands
-- **Install dependencies:** `[e.g., npm install / uv sync]`
-- **Run locally:** `[e.g., npm run dev]`
-- **Run deterministic tests:** `[e.g., pytest / npm test]`
-- **Run model evals:** `[e.g., python tests/eval.py]`
+- **Install dependencies:** none needed (just install Node.js 22+ from nodejs.org)
+- **Run locally:** `npm start` → open http://localhost:3000
+- **Run deterministic tests:** `npm test`
+- **Run model evals:** not yet (no AI model in the app yet)
 
 ## 3. Non-Negotiable Engineering Rules
 1. **Plan before coding:** Before touching multiple files, propose a brief plan and wait for approval.

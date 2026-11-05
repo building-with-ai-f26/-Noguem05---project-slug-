@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SnapSet</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 16px; }
+    h1 { margin-top: 0; }
+    section { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+    label { display: block; margin: 8px 0 4px; font-weight: 600; }
+    input, select, button { width: 100%; font-size: 16px; padding: 10px; box-sizing: border-box; }
+    button { background: #222; color: #fff; border: 0; border-radius: 6px; margin-top: 12px; }
+    #preview { max-width: 100%; margin-top: 8px; border-radius: 6px; }
+    .muted { color: #666; }
+  </style>
+</head>
+<body>
+  <h1>SnapSet</h1>
+
+  <section>
+    <label for="photo">1. Photo of the machine</label>
+    <!-- capture="environment" opens the back camera on phones -->
+    <input id="photo" type="file" accept="image/*" capture="environment">
+    <img id="preview" hidden alt="Machine photo">
+  </section>
+
+  <section>
+    <!-- FAKE identification: the user picks the machine. Real AI vision comes later. -->
+    <label for="machine">2. Which machine is it?</label>
+    <select id="machine">
+      <option value="">-- choose --</option>
+    </select>
+    <p id="muscle" class="muted"></p>
+  </section>
+
+  <section>
+    <strong>3. Last time</strong>
+    <p id="last" class="muted">Choose a machine to see your last log.</p>
+  </section>
+
+  <section>
+    <strong>4. Log today</strong>
+    <label for="sets">Sets</label>
+    <input id="sets" type="number" min="1" inputmode="numeric">
+    <label for="reps">Reps</label>
+    <input id="reps" type="number" min="1" inputmode="numeric">
+    <label for="weight">Weight (lb)</label>
+    <input id="weight" type="number" min="0" step="0.5" inputmode="decimal">
+    <button id="log">Log</button>
+    <p id="status" class="muted"></p>
+  </section>
+
+  <script>
+    const MACHINES = {
+      "Leg Press": "Quads, glutes",
+      "Chest Press": "Chest, triceps",
+      "Lat Pulldown": "Back (lats), biceps",
+      "Seated Row": "Upper back, biceps",
+      "Leg Extension": "Quads",
+      "Shoulder Press": "Shoulders, triceps",
+    };
+
+    const $ = (id) => document.getElementById(id);
+    for (const name of Object.keys(MACHINES)) $("machine").add(new Option(name, name));
+
+    // Show the photo on screen only (not uploaded anywhere yet)
+    $("photo").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      $("preview").src = URL.createObjectURL(file);
+      $("preview").hidden = false;
+    });
+
+    async function showLast() {
+      const machine = $("machine").value;
+      $("muscle").textContent = machine ? "Muscle group: " + MACHINES[machine] : "";
+      if (!machine) { $("last").textContent = "Choose a machine to see your last log."; return; }
+      const res = await fetch("/api/last?machine=" + encodeURIComponent(machine));
+      const last = await res.json();
+      $("last").textContent = last
+        ? `${last.date}: ${last.sets} sets × ${last.reps} reps @ ${last.weight} lb`
+        : "No logs yet for this machine.";
+    }
+    $("machine").addEventListener("change", showLast);
+
+    $("log").addEventListener("click", async () => {
+      const body = {
+        machine: $("machine").value,
+        sets: Number($("sets").value),
+        reps: Number($("reps").value),
+        weight: Number($("weight").value),
+      };
+      if (!body.machine) { $("status").textContent = "Pick a machine first."; return; }
+      const res = await fetch("/api/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      $("status").textContent = res.ok ? "Saved!" : data.error;
+      if (res.ok) showLast();
+    });
+  </script>
+</body>
+</html>
