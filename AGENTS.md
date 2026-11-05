@@ -5,13 +5,14 @@
 ## 1. Project Overview
 - **What this repo builds:** SnapSet — snap a photo of a gym machine, see what you logged last time on it, and log today's sets/reps/weight.
 - **Primary user & core workflow:** [See the living PRD in `docs/index.html`]
-- **Tech stack:** Node.js 22 (built-in modules only, no npm packages) / plain HTML+JS page in `public/` / logs saved to `data/logs.json` (gitignored). Machine "identification" is currently faked with a dropdown; real AI vision comes later.
+- **Tech stack:** Node.js 22 (built-in modules only, no npm packages) / plain HTML+JS page in `public/` / logs saved to `data/logs.json` (gitignored) / photo identification via OpenRouter (`deepseek/deepseek-v4.1-flash` vision model, set by `OPENROUTER_MODEL`). The model must answer with one of the 6 machines in `MACHINES` (`server.js`) or "unknown"; the user can correct it with "Not right? Fix it".
 
 ## 2. Commands
 - **Install dependencies:** none needed (just install Node.js 22+ from nodejs.org)
+- **One-time setup:** `Copy-Item .env.example .env`, then put your OpenRouter key after `OPENROUTER_API_KEY=` in `.env` (never commit `.env`)
 - **Run locally:** `npm start` → open http://localhost:3000
-- **Run deterministic tests:** `npm test`
-- **Run model evals:** not yet (no AI model in the app yet)
+- **Run deterministic tests:** `npm test` (no API calls, free)
+- **Run model evals:** not yet. Manual check so far: 2 Wikimedia Commons photos (leg press, lat pulldown) both identified correctly, ~$0.0002–0.0004 per photo.
 
 ## 3. Non-Negotiable Engineering Rules
 1. **Plan before coding:** Before touching multiple files, propose a brief plan and wait for approval.

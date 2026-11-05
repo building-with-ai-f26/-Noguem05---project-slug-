@@ -12,6 +12,8 @@
     input, select, button { width: 100%; font-size: 16px; padding: 10px; box-sizing: border-box; }
     button { background: #222; color: #fff; border: 0; border-radius: 6px; margin-top: 12px; }
     #preview { max-width: 100%; margin-top: 8px; border-radius: 6px; }
+    #result { font-size: 18px; margin: 4px 0; }
+    .link { background: none; color: #06c; padding: 0; margin: 4px 0; width: auto; text-decoration: underline; font-size: 14px; }
     .muted { color: #666; }
   </style>
 </head>
@@ -19,24 +21,27 @@
   <h1>SnapSet</h1>
 
   <section>
-    <label for="photo">1. Photo of the machine</label>
+    <label for="photo">1. Snap the machine</label>
     <!-- capture="environment" opens the back camera on phones -->
     <input id="photo" type="file" accept="image/*" capture="environment">
     <img id="preview" hidden alt="Machine photo">
   </section>
 
   <section>
-    <!-- FAKE identification: the user picks the machine. Real AI vision comes later. -->
-    <label for="machine">2. Which machine is it?</label>
-    <select id="machine">
-      <option value="">-- choose --</option>
-    </select>
-    <p id="muscle" class="muted"></p>
+    <strong>2. Machine</strong>
+    <p id="result" class="muted">Take a photo and SnapSet will recognize the machine.</p>
+    <button id="fix" class="link" type="button">Not right? Fix it</button>
+    <div id="picker" hidden>
+      <label for="machine">Choose the machine</label>
+      <select id="machine">
+        <option value="">-- choose --</option>
+      </select>
+    </div>
   </section>
 
   <section>
     <strong>3. Last time</strong>
-    <p id="last" class="muted">Choose a machine to see your last log.</p>
+    <p id="last" class="muted">—</p>
   </section>
 
   <section>
@@ -52,37 +57,76 @@
   </section>
 
   <script>
-    const MACHINES = {
-      "Leg Press": "Quads, glutes",
-      "Chest Press": "Chest, triceps",
-      "Lat Pulldown": "Back (lats), biceps",
-      "Seated Row": "Upper back, biceps",
-      "Leg Extension": "Quads",
-      "Shoulder Press": "Shoulders, triceps",
-    };
-
     const $ = (id) => document.getElementById(id);
-    for (const name of Object.keys(MACHINES)) $("machine").add(new Option(name, name));
+    let MACHINES = {};
 
-    // Show the photo on screen only (not uploaded anywhere yet)
-    $("photo").addEventListener("change", (e) => {
+    // Load the machine list from the server (one shared list)
+    fetch("/api/machines").then((r) => r.json()).then((m) => {
+      MACHINES = m;
+      for (const name of Object.keys(m)) $("machine").add(new Option(name, name));
+    });
+
+    // Shrink the photo before sending: faster upload, cheaper AI call
+    function shrinkPhoto(file, maxSide = 1024) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        };
+        img.onerror = () => reject(new Error("Couldn't read that image."));
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    // Show which machine is selected and load its last log
+    function selectMachine(machine) {
+      $("machine").value = machine || "";
+      $("result").textContent = machine
+        ? `${machine} (${MACHINES[machine]})`
+        : "Not sure which machine this is. Please choose it below.";
+      showLast();
+    }
+
+    $("photo").addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
       $("preview").src = URL.createObjectURL(file);
       $("preview").hidden = false;
+      $("result").textContent = "Identifying…";
+      $("picker").hidden = true;
+      try {
+        const res = await fetch("/api/identify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: await shrinkPhoto(file) }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        selectMachine(data.machine);
+        if (!data.machine) $("picker").hidden = false; // AI wasn't sure: open the picker
+      } catch (err) {
+        $("result").textContent = err.message || "Couldn't identify the photo. Pick the machine below.";
+        $("picker").hidden = false;
+      }
     });
+
+    $("fix").addEventListener("click", () => { $("picker").hidden = !$("picker").hidden; });
+    $("machine").addEventListener("change", () => selectMachine($("machine").value));
 
     async function showLast() {
       const machine = $("machine").value;
-      $("muscle").textContent = machine ? "Muscle group: " + MACHINES[machine] : "";
-      if (!machine) { $("last").textContent = "Choose a machine to see your last log."; return; }
+      if (!machine) { $("last").textContent = "—"; return; }
       const res = await fetch("/api/last?machine=" + encodeURIComponent(machine));
       const last = await res.json();
       $("last").textContent = last
         ? `${last.date}: ${last.sets} sets × ${last.reps} reps @ ${last.weight} lb`
         : "No logs yet for this machine.";
     }
-    $("machine").addEventListener("change", showLast);
 
     $("log").addEventListener("click", async () => {
       const body = {
@@ -91,7 +135,7 @@
         reps: Number($("reps").value),
         weight: Number($("weight").value),
       };
-      if (!body.machine) { $("status").textContent = "Pick a machine first."; return; }
+      if (!body.machine) { $("status").textContent = "Take a photo or choose a machine first."; return; }
       const res = await fetch("/api/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
